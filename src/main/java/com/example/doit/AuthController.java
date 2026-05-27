@@ -83,7 +83,7 @@ public class AuthController {
 
     @GetMapping("/verify/{token}")
     public ResponseEntity<Void> verifyAccount(@PathVariable String token) {
-        String frontendLoginUrl = "https://your-portfolio-name.vercel.app/login.html";
+        String frontendLoginUrl = "https://do-it-frontend.vercel.app/login.html";
 
         userRepository.findByUsername(token).ifPresent(user -> {
             if (!user.isVerified()) {
