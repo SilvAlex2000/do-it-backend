@@ -1,5 +1,8 @@
 package com.example.doit;
 
+import com.resend.Resend;
+import com.resend.core.exception.ResendException;
+import com.resend.services.emails.model.CreateEmailOptions;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -8,12 +11,10 @@ import java.util.Optional;
 @Service
 public class UserService {
     private final UserRepository userRepository;
-    private final EmailService emailService;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    public UserService(UserRepository userRepository, EmailService emailService) {
+    public UserService(UserRepository userRepository) {
         this.userRepository = userRepository;
-        this.emailService = emailService;
     }
 
     public User registerUser(String username, String email, String password) {
@@ -26,7 +27,21 @@ public class UserService {
 
     @Async
     public void sendVerificationEmailAsync(String to, String token) {
-        emailService.sendVerificationEmail(to, token);
+        String apiKey = System.getenv("RESEND_API_KEY");
+        Resend resend = new Resend(apiKey);
+
+        CreateEmailOptions params = CreateEmailOptions.builder()
+                .from("onboarding@resend.dev")
+                .to(to)
+                .subject("Confirm Your Account")
+                .html("<p>Click <a href='https://do-it-backend-6a5i.onrender.com/api/verify/" + token + "'>here</a> to verify.</p>")
+                .build();
+
+        try {
+            resend.emails().send(params);
+        } catch (ResendException e) {
+            e.printStackTrace();
+        }
     }
 
     public Optional<User> login(String username, String password) {
