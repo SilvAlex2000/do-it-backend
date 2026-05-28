@@ -32,6 +32,8 @@ public class UserService {
 
     @Async
     public void sendVerificationEmailAsync(String to, String token) {
+        System.out.println("DEBUG: Sending from: " + fromEmail); // fromEmail is the @Value field
+
         SimpleMailMessage message = new SimpleMailMessage();
         message.setFrom(fromEmail);
         message.setTo(to);
@@ -40,7 +42,9 @@ public class UserService {
 
         try {
             mailSender.send(message);
+            System.out.println("DEBUG: Email sent successfully!");
         } catch (Exception e) {
+            System.err.println("DEBUG: Email failed to send!");
             e.printStackTrace();
         }
     }
