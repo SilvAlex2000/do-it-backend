@@ -1,5 +1,6 @@
 package com.example.doit;
 
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import java.util.Optional;
@@ -13,6 +14,7 @@ public class UserService {
         this.userRepository = userRepository;
     }
 
+    @Async
     public User registerUser(String username, String email, String password) {
         User user = new User();
         user.setUsername(username);
