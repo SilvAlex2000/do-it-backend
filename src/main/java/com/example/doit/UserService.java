@@ -30,7 +30,6 @@ public class UserService {
         return userRepository.save(user);
     }
 
-    @Async
     public void sendVerificationEmailAsync(String to, String token) {
         System.out.println("DEBUG: Sending from: " + fromEmail); // fromEmail is the @Value field
 
