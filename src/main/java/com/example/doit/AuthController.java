@@ -45,7 +45,8 @@ public class AuthController {
             }
 
             User user = userService.registerUser(username, email, password);
-            emailService.sendVerificationEmail(user.getEmail(), user.getUsername());
+
+            userService.sendVerificationEmailAsync(user.getEmail(), user.getUsername());
 
             return ResponseEntity.ok(Map.of("status", "success", "message", "Check your email to verify!"));
         } catch (Exception e) {

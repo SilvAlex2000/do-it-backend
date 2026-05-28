@@ -8,19 +8,25 @@ import java.util.Optional;
 @Service
 public class UserService {
     private final UserRepository userRepository;
+    private final EmailService emailService;
     private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
 
-    public UserService(UserRepository userRepository) {
+    public UserService(UserRepository userRepository, EmailService emailService) {
         this.userRepository = userRepository;
+        this.emailService = emailService;
     }
 
-    @Async
     public User registerUser(String username, String email, String password) {
         User user = new User();
         user.setUsername(username);
         user.setEmail(email);
         user.setPassword(passwordEncoder.encode(password));
         return userRepository.save(user);
+    }
+
+    @Async
+    public void sendVerificationEmailAsync(String to, String token) {
+        emailService.sendVerificationEmail(to, token);
     }
 
     public Optional<User> login(String username, String password) {
