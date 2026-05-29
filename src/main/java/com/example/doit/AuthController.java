@@ -13,14 +13,11 @@ import java.util.Map;
 public class AuthController {
 
     private final UserService userService;
-    private final EmailService emailService;
     private final UserRepository userRepository;
 
     public AuthController(UserService userService,
-                          EmailService emailService,
                           UserRepository userRepository) {
         this.userService = userService;
-        this.emailService = emailService;
         this.userRepository = userRepository;
     }
 
@@ -28,15 +25,10 @@ public class AuthController {
     public ResponseEntity<?> register(@RequestBody Map<String, String> data) {
         String username = data.get("username");
         String password = data.get("password");
-        String email = data.get("email");
 
         String passwordRegex = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]{8,}$";
-
         if (password == null || !password.matches(passwordRegex)) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "status", "error",
-                    "message", "Password too weak. Must contain 8+ chars, uppercase, lowercase, number, and special char."
-            ));
+            return ResponseEntity.badRequest().body(Map.of("status", "error", "message", "Password too weak."));
         }
 
         try {
@@ -44,13 +36,10 @@ public class AuthController {
                 return ResponseEntity.badRequest().body(Map.of("status", "error", "message", "Username taken"));
             }
 
-            User user = userService.registerUser(username, email, password);
-
-            userService.sendVerificationEmailAsync(user.getEmail(), user.getUsername());
-
-            return ResponseEntity.ok(Map.of("status", "success", "message", "Check your email to verify!"));
+            userService.registerUser(username, password); // Email removed
+            return ResponseEntity.ok(Map.of("status", "success", "message", "Registration successful!"));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("status", "error", "message", "Registration failed: " + e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of("status", "error", "message", "Registration failed"));
         }
     }
 
@@ -58,13 +47,8 @@ public class AuthController {
     public ResponseEntity<?> login(@RequestBody Map<String, String> data, HttpSession session) {
         return userService.login(data.get("username"), data.get("password"))
                 .map(user -> {
-                    if (!user.isVerified()) {
-                        return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                                .body(Map.of("status", "error", "message", "Verify your email first."));
-                    }
-
                     session.setAttribute("user", user.getUsername());
-                    return ResponseEntity.ok(Map.of("status", "success", "message", "Logged in successfully!"));
+                    return ResponseEntity.ok(Map.of("status", "success", "message", "Logged in!"));
                 })
                 .orElse(ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                         .body(Map.of("status", "error", "message", "Invalid credentials")));
@@ -80,21 +64,5 @@ public class AuthController {
     public Map<String, Object> checkAuth(HttpSession session) {
         String username = (String) session.getAttribute("user");
         return Map.of("is_logged_in", username != null, "user", username == null ? "" : username);
-    }
-
-    @GetMapping("/verify/{token}")
-    public ResponseEntity<Void> verifyAccount(@PathVariable String token) {
-        String frontendLoginUrl = "https://do-it-frontend.vercel.app/login.html";
-
-        userRepository.findByUsername(token).ifPresent(user -> {
-            if (!user.isVerified()) {
-                user.setVerified(true);
-                userRepository.save(user);
-            }
-        });
-
-        return ResponseEntity.status(HttpStatus.FOUND)
-                .location(URI.create(frontendLoginUrl))
-                .build();
     }
 }
