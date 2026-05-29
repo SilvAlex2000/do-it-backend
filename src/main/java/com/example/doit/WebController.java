@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.ui.Model;
 import org.springframework.web.servlet.HandlerMapping;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 
 @Controller
@@ -26,11 +27,13 @@ public class WebController {
     }
 
     @GetMapping("/api/content/post_view")
+    @ResponseBody
     public String getPostViewTemplate() {
         return "post_view";
     }
 
     @GetMapping("/api/content/personal-area")
+    @ResponseBody
     public String getPersonalArea(HttpSession session, Model model) {
         String username = (String) session.getAttribute("user");
         if (username == null) return "error/401";
@@ -42,6 +45,7 @@ public class WebController {
     }
 
     @GetMapping("/api/content/{page}/**")
+    @ResponseBody
     public String getContent(@PathVariable String page, HttpServletRequest request) {
         String fullPath = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
 
@@ -63,6 +67,7 @@ public class WebController {
     }
 
     @GetMapping("/api/public-profile/{username}")
+    @ResponseBody
     public String getPublicProfile(@PathVariable String username, Model model) {
         return userRepository.findByUsername(username).map(user -> {
             model.addAttribute("target_username", user.getUsername());
@@ -72,6 +77,7 @@ public class WebController {
     }
 
     @GetMapping("/comment-item")
+    @ResponseBody
     public String getCommentTemplate() {
         return "comment_item";
     }
