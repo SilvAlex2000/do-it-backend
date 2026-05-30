@@ -30,7 +30,7 @@ public class WebController {
             case "register" -> "register_content";
             case "post-item" -> "post_item";
             case "user_center" -> "personal_area_content";
-            default -> "error_404";
+            default -> "404";
         };
     }
 
