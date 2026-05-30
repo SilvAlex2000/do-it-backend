@@ -1,29 +1,21 @@
 package com.example.doit;
 
-
-import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import jakarta.servlet.http.HttpSession;
-import org.springframework.ui.Model;
-import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
-
+import org.springframework.util.FileCopyUtils;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 
 @Controller
-
 public class WebController {
 
-    private final UserRepository userRepository;
     private final ResourceLoader resourceLoader;
 
-    public WebController(UserRepository userRepository, ResourceLoader resourceLoader) {
-        this.userRepository = userRepository;
+    public WebController(ResourceLoader resourceLoader) {
         this.resourceLoader = resourceLoader;
     }
 
@@ -32,68 +24,28 @@ public class WebController {
         return "index";
     }
 
-    @GetMapping("/api/content/post_view")
-    @ResponseBody
-    public String getPostViewTemplate() {
-        return "post_view";
-    }
-
-    @GetMapping("/api/content/personal-area")
-    @ResponseBody
-    public String getPersonalArea(HttpSession session, Model model) {
-        String username = (String) session.getAttribute("user");
-        if (username == null) return "error/401";
-
-        return userRepository.findByUsername(username).map(user -> {
-            model.addAttribute("profile_pic_url", "/" + user.getProfilePicPath() + "?v=" + System.currentTimeMillis());
-            return "personal_area_content";
-        }).orElse("error/404");
-    }
-
     @GetMapping("/api/content/{page}/**")
     @ResponseBody
-    public String getContent(@PathVariable String page, HttpServletRequest request) {
-        String fullPath = (String) request.getAttribute(HandlerMapping.PATH_WITHIN_HANDLER_MAPPING_ATTRIBUTE);
-
-        if (fullPath.contains("profile/")) {
-            return "user_profile_public";
-        }
-        if (fullPath.contains("post/")) {
-            return "post_view";
-        }
-
-        return switch (page) {
-            case "home" -> loadTemplate("home_content");
-            case "login" -> loadTemplate("login_content");
-            case "register" -> loadTemplate("register_content");
-            case "post-item" -> loadTemplate("post_item");
-            case "user_center" -> loadTemplate("personal_area_content");
-            default -> ("error/404");
+    public String getContent(@PathVariable String page) {
+        String fileName = switch (page) {
+            case "home" -> "home_content";
+            case "login" -> "login_content";
+            case "register" -> "register_content";
+            case "post-item" -> "post_item";
+            case "user_center" -> "personal_area_content";
+            default -> "error_404";
         };
+        return loadTemplate(fileName);
     }
 
     private String loadTemplate(String templateName) {
         try {
             Resource resource = resourceLoader.getResource("classpath:templates/" + templateName + ".html");
-            return new String(Files.readAllBytes(Paths.get(resource.getURI())));
+            try (var reader = new InputStreamReader(resource.getInputStream(), StandardCharsets.UTF_8)) {
+                return FileCopyUtils.copyToString(reader);
+            }
         } catch (Exception e) {
-            return "Error loading template: " + templateName;
+            return "<div>Error loading template</div>";
         }
-    }
-
-    @GetMapping("/api/public-profile/{username}")
-    @ResponseBody
-    public String getPublicProfile(@PathVariable String username, Model model) {
-        return userRepository.findByUsername(username).map(user -> {
-            model.addAttribute("target_username", user.getUsername());
-            model.addAttribute("target_user_pic", "/" + user.getProfilePicPath());
-            return "user_profile_public";
-        }).orElse("error/404");
-    }
-
-    @GetMapping("/comment-item")
-    @ResponseBody
-    public String getCommentTemplate() {
-        return "comment_item";
     }
 }
