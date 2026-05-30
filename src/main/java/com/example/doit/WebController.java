@@ -4,7 +4,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.ui.Model;
+import java.util.Map;
+import org.springframework.http.ResponseEntity;
 
 @Controller
 public class WebController {
@@ -35,12 +36,13 @@ public class WebController {
 
     @GetMapping("/api/profile/{username}")
     @ResponseBody
-    public String getPublicProfile(@PathVariable String username, Model model) {
-        return userRepository.findByUsername(username).map(user -> {
-            model.addAttribute("target_username", user.getUsername());
-            model.addAttribute("target_user_pic", "/" + user.getProfilePicPath());
-            return "user_profile_public";
-        }).orElse("error/404");
+    public ResponseEntity<?> getPublicProfile(@PathVariable String username) {
+        return userRepository.findByUsername(username)
+                .map(user -> ResponseEntity.ok(Map.of(
+                        "username", user.getUsername(),
+                        "profile_pic", "/" + user.getProfilePicPath()
+                )))
+                .orElse(ResponseEntity.notFound().build());
     }
 
     @GetMapping("/comment-item")
