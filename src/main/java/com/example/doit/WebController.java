@@ -9,6 +9,10 @@ import jakarta.servlet.http.HttpSession;
 import org.springframework.ui.Model;
 import org.springframework.web.servlet.HandlerMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
 
 
 @Controller
@@ -16,9 +20,11 @@ import org.springframework.web.bind.annotation.ResponseBody;
 public class WebController {
 
     private final UserRepository userRepository;
+    private final ResourceLoader resourceLoader;
 
-    public WebController(UserRepository userRepository) {
+    public WebController(UserRepository userRepository, ResourceLoader resourceLoader) {
         this.userRepository = userRepository;
+        this.resourceLoader = resourceLoader;
     }
 
     @GetMapping({"/", "/home", "/user", "/user_center", "/profile/{username}", "/post/{id}"})
@@ -57,13 +63,22 @@ public class WebController {
         }
 
         return switch (page) {
-            case "home" -> "home_content";
-            case "login" -> "login_content";
-            case "register" -> "register_content";
-            case "post-item" -> "post_item";
-            case "user_center" -> "personal_area_content";
-            default -> "error/404";
+            case "home" -> loadTemplate("home_content");
+            case "login" -> loadTemplate("login_content");
+            case "register" -> loadTemplate("register_content");
+            case "post-item" -> loadTemplate("post_item");
+            case "user_center" -> loadTemplate("personal_area_content");
+            default -> ("error/404");
         };
+    }
+
+    private String loadTemplate(String templateName) {
+        try {
+            Resource resource = resourceLoader.getResource("classpath:templates/" + templateName + ".html");
+            return new String(Files.readAllBytes(Paths.get(resource.getURI())));
+        } catch (Exception e) {
+            return "Error loading template: " + templateName;
+        }
     }
 
     @GetMapping("/api/public-profile/{username}")
