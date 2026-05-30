@@ -76,7 +76,7 @@ public class PostController {
         map.put("date_posted", post.getDatePosted());
 
         String picPath = post.getAuthor().getProfilePicPath();
-        map.put("profile_pic", (picPath != null) ? "/" + picPath : "/img/default-avatar.png");
+        map.put("profile_pic", (picPath != null) ? picPath : "/img/default-avatar.png");
 
         if (post.getImageExtension() != null && !post.getImageExtension().isEmpty()) {
             map.put("image_url", "/img/user_posts/" + post.getAuthor().getUsername() + "/" + post.getId() + post.getImageExtension());
