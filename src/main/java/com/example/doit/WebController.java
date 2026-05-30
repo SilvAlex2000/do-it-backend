@@ -33,7 +33,8 @@ public class WebController {
         };
     }
 
-    @GetMapping("/api/public-profile/{username}")
+    @GetMapping("/api/profile/{username}")
+    @ResponseBody
     public String getPublicProfile(@PathVariable String username, Model model) {
         return userRepository.findByUsername(username).map(user -> {
             model.addAttribute("target_username", user.getUsername());
